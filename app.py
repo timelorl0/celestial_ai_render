@@ -1,18 +1,51 @@
 from fastapi import FastAPI
+from pydantic import BaseModel
+import uvicorn
 
 app = FastAPI()
 
-@app.get("/")
-def root():
-    return {"status": "ok", "message": "Celestial AI Render is running!"}
+# -----------------------------
+#  CẤU TRÚC TIN NHẮN
+# -----------------------------
+class Command(BaseModel):
+    sender: str
+    message: str
 
-@app.get("/ping")
-def ping():
-    return {"pong": True}
+# -----------------------------
+#  AI THIÊN ĐẠO LOGIC
+# -----------------------------
+def ai_engine(msg: str):
+    msg = msg.lower()
 
-@app.get("/command")
-def command(cmd: str = "none"):
+    if "xin chào" in msg or "hello" in msg:
+        return "Ta là Thiên Đạo — đã kết nối."
+    if "lệnh" in msg:
+        return "Thiên Đạo đã nhận lệnh. Đang xử lý..."
+    if "status" in msg or "tình trạng" in msg:
+        return "Hệ thống Thiên Đạo đang vận hành ổn định."
+    
+    # fallback
+    return f"Thiên Đạo nhận: {msg}"
+
+# -----------------------------
+#  API CHÍNH
+# -----------------------------
+@app.post("/cmd")
+async def receive_command(cmd: Command):
+    response = ai_engine(cmd.message)
     return {
-        "received": cmd,
-        "response": "Thiên Đạo nhận lệnh: " + cmd
+        "from": "thiendao",
+        "to": cmd.sender,
+        "response": response
     }
+
+# -----------------------------
+#  CHECK SERVER STATUS
+# -----------------------------
+@app.get("/")
+async def root():
+    return {"status": "Thiên Đạo đã khởi động thành công!"}
+
+# Chỉ dùng khi chạy LOCAL
+if __name__ == "__main__":
+    uvicorn.run("app:app", host="0.0.0.0", port=10000)
